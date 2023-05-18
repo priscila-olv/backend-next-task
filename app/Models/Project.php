@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Project extends Model
 {
     use HasFactory;
+    public $timestamps = false;
+    protected $fillable = ['description', 'users_id'];
 }
