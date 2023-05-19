@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Models\User;
+
 use Illuminate\Auth\Access\AuthorizationException;
 
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -41,7 +43,17 @@ class AuthController extends Controller
 
     public function isAuth(Request $request)
     {
-        return response()->json(['message' => 'Usuário autenticado']);
+        $idUser = auth()->id();
+        $user = User::findOrFail($idUser);
+
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ];
+    
+
+        return response()->json(['data' => $userData, 'message' => 'Usuário autenticado', 'isAuth' => 'true']);
     }
     
 }

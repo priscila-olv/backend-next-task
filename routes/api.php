@@ -60,7 +60,6 @@ Route::get('/sections', [SectionsController::class, 'index']);
 Route::post('/sections', [SectionsController::class, 'store']);
 Route::delete('/sections/{section}', [SectionsController::class, 'remove']);
 Route::get('/{project}/sections', [SectionsController::class, 'getAllUserSections']);
-
 });
 
 
