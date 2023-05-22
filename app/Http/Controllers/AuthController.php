@@ -99,14 +99,14 @@ class AuthController extends Controller
 
             $emailConfirmation = EmailConfirmation::whereHas('user', function ($query) use ($email) {
                 $query->where('email', $email);
-            })
-                ->first();
+            })->first();
 
             if (!$emailConfirmation) {
                 return response()->json(['error' => 'Usuário não encontrado'], 404);
             }
 
             $storedToken = $emailConfirmation->token;
+
             if (!password_verify($token, $storedToken)) {
                 return response()->json(['error' => 'Token inválido'], 400);
             }

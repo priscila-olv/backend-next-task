@@ -12,14 +12,20 @@ class EmailService
 {
     public function generateToken($user)
     {
+        $emailConfirmation = EmailConfirmation::where('user_id', $user->id)->first();
+
+    if ($emailConfirmation) {
         $token = strtoupper(Str::random(6));
-        
+        $emailConfirmation->token = $token;
+        $emailConfirmation->save();
+    } else {
+        $token = strtoupper(Str::random(6));
         $emailConfirmation = new EmailConfirmation();
         $emailConfirmation->user_id = $user->id;
         $emailConfirmation->token = $token;
         $emailConfirmation->save();
-        
-        return $token;
+    }
+    return $token;
     }
     
     public function sendConfirmationEmail($user, $email, $mailData)

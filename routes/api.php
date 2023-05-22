@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\SomeController;
 use App\Http\Controllers\TasksController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
