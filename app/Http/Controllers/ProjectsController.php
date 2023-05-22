@@ -59,5 +59,27 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    public function update(Request $request, Project $project)
+    {
+        $this->middleware('jwt.auth');
 
+        if (auth()->user()->id !== $project->users_id) {
+            return response()->json(['error' => 'Você não tem permissão para atualizar este projeto'], 403);
+        }
+        try {
+            $project->description = $request->input('description');
+
+            $extraFields = $request->except(['description']);
+            if (!empty($extraFields)) {
+                $invalidFields = implode(', ', array_keys($extraFields));
+                return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
+            }
+            $project->save();
+
+            return response()->json(['project' => $project, 'message' => 'Projeto modificado com sucesso'], 201);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

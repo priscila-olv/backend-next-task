@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SomeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
@@ -20,11 +21,18 @@ use App\Http\Controllers\AuthController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+// Rota para enviar o email de confirmação
+
+// Rota para atualizar o email do usuário após a confirmação
+
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+//PasswordReset
+Route::post('/auth/send-email-confirmation', [AuthController::class, 'sendEmailConfirmation']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 //Login
 Route::post('/auth/login', [AuthController::class, 'generateToken']);
@@ -40,10 +48,10 @@ Route::get('/users/{user}', [UsersController::class, 'find']);
 Route::put('/users/{user}', [UsersController::class, 'update']);
 Route::delete('/users/{user}', [UsersController::class, 'remove']);
 Route::put('/users/reset-password/{user}', [UsersController::class, 'resetPassword']);
-Route::get('/users/count-logged', [UsersController::class, 'getLoggedUsers']);
 
 //Auth
 Route::get('/auth/is-auth', [AuthController::class, 'isAuth']);
+Route::post('/logout', [AuthController::class, 'logout']);
 
 //Priority
 Route::get('/priorities', [PrioritiesController::class, 'index']);
@@ -54,6 +62,8 @@ Route::delete('/priorities/{priority}', [PrioritiesController::class, 'remove'])
 Route::get('/projects', [ProjectsController::class, 'index']);
 Route::post('/projects', [ProjectsController::class, 'store']);
 Route::delete('/projects/{project}', [ProjectsController::class, 'remove']);
+Route::put('/projects/{project}', [ProjectsController::class, 'update']);
+
 
 //Section
 Route::get('/sections', [SectionsController::class, 'index']);

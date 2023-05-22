@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ConfirmationMail;
+use App\Models\EmailConfirmation;
+use App\Services\EmailService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
@@ -23,25 +27,7 @@ class UsersController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function getLoggedUsers()
-    {
-        $users = [];
-        
-        foreach (JWTAuth::manager()->getBlacklist()->get() as $token) {
-            try {
-                $payload = JWTAuth::manager()->decode($token);
-                $users[] = $payload['sub'];
-            } catch (TokenExpiredException $e) {
-                // O token expirou, pode ignorar
-            } catch (TokenInvalidException $e) {
-                // O token é inválido, pode ignorar
-            } catch (JWTException $e) {
-                // Falha ao decodificar o token, pode ignorar
-            }
-        }
-        
-        return response()->json(['logged_users' => $users]);
-    }
+
     public function store(Request $request)
     {
         try {
@@ -65,7 +51,14 @@ class UsersController extends Controller
                 return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
             }
 
-            return response()->json(['user' => $user, 'message' => 'Usuário criado com sucesso'], 201);
+            $userData = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ];
+
+            return response()->json(['user' => $userData, 'message' => 'Usuário criado com sucesso'], 201);
+
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -75,6 +68,14 @@ class UsersController extends Controller
         $this->middleware('jwt.auth');
 
         try {
+            if (auth()->user()->id !== $user->id) {
+                return response()->json(['error' => 'Você não tem permissão para atualizar este perfil'], 403);
+            }
+
+            if (User::where('email', $request->input("email"))->first()) {
+                return response()->json(['error' => 'Email informado já está cadastrado no sistema.'], 400);
+            }
+
             $user->name = $request->input('name');
             $user->email = $request->input('email');
 
@@ -84,12 +85,20 @@ class UsersController extends Controller
                 return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
             }
             $user->save();
-            return $user;
+
+            $userData = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ];
+
+            return response()->json(['user' => $userData, 'message' => 'Usuário modificado com sucesso'], 201);
 
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
     public function remove(User $user)
     {
         $this->middleware('jwt.auth');
@@ -121,6 +130,10 @@ class UsersController extends Controller
         $this->middleware('jwt.auth');
 
         try {
+            if (auth()->user()->id !== $user->id) {
+                return response()->json(['error' => 'Você não tem permissão para atualizar este perfil'], 403);
+            }
+            
             $oldPassword = $request->input('old_password');
             $newPassword = $request->input('new_password');
             $confirmPassword = $request->input('confirm_password');
@@ -141,4 +154,5 @@ class UsersController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
 }
