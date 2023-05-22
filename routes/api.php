@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SomeController;
+use App\Http\Controllers\TasksController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
@@ -64,12 +65,20 @@ Route::post('/projects', [ProjectsController::class, 'store']);
 Route::delete('/projects/{project}', [ProjectsController::class, 'remove']);
 Route::put('/projects/{project}', [ProjectsController::class, 'update']);
 
-
 //Section
 Route::get('/sections', [SectionsController::class, 'index']);
 Route::post('/sections', [SectionsController::class, 'store']);
 Route::delete('/sections/{section}', [SectionsController::class, 'remove']);
-Route::get('/{project}/sections', [SectionsController::class, 'getAllUserSections']);
+Route::get('projects/{project}/sections', [SectionsController::class, 'getAllProjectSections']);
+Route::put('/sections/{section}', [SectionsController::class, 'update']);
+
+//Task
+  Route::get('/tasks', [TasksController::class, 'index']);
+  Route::post('/tasks', [TasksController::class, 'store']);
+  Route::delete('/tasks/{task}', [TasksController::class, 'remove']);
+  Route::get('/tasks/{task}', [TasksController::class, 'getByIdTask']);
+  Route::get('/sections/{section}/tasks', [TasksController::class, 'getByIdSection']);
+  Route::patch('/tasks/{task}', [TasksController::class, 'update']);
 });
 
 
