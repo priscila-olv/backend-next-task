@@ -62,7 +62,7 @@ Route::delete('/priorities/{priority}', [PrioritiesController::class, 'remove'])
 Route::get('/projects', [ProjectsController::class, 'index']);
 Route::post('/projects', [ProjectsController::class, 'store']);
 Route::delete('/projects/{project}', [ProjectsController::class, 'remove']);
-Route::put('/projects/{project}', [ProjectsController::class, 'update']);
+Route::patch('/projects/{project}', [ProjectsController::class, 'update']);
 
 //Section
 Route::get('/sections', [SectionsController::class, 'index']);

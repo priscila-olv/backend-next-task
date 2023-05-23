@@ -20,7 +20,7 @@ class ProjectsController extends Controller
             $projects = Project::with(['sections' => function ($query) {
                     $query->withCount('tasks');
                 }])
-                ->select('id', 'description', 'users_id')
+                ->select('id', 'description', 'users_id', 'color')
                 ->where('users_id', $user_id)
                 ->get();
     
@@ -72,7 +72,7 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function update(Request $request, Project $project)
+    public function _update(Request $request, Project $project)
     {
         $this->middleware('jwt.auth');
 
@@ -92,6 +92,28 @@ class ProjectsController extends Controller
 
             return response()->json(['project' => $project, 'message' => 'Projeto modificado com sucesso'], 201);
 
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    public function update(Request $request, Project $project)
+    {
+        $this->middleware('jwt.auth');
+
+        try {
+            $user_id = auth()->id();
+            if (auth()->user()->id !== $project->users_id) {
+                return response()->json(['error' => 'Você não tem permissão para atualizar este projeto'], 403);
+            }
+    
+            $project->fill($request->only([
+                'description',
+                'color',
+            ]));
+    
+            $project->save();
+    
+            return response()->json(['project' => $project, 'message' => 'Projeto atualizado com sucesso.'], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
