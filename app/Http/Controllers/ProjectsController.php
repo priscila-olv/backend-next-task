@@ -17,18 +17,30 @@ class ProjectsController extends Controller
     {
         try {
             $user_id = auth()->id();
-            $projects = Project::where('users_id', $user_id)->get();
+            $projects = Project::with(['sections' => function ($query) {
+                    $query->withCount('tasks');
+                }])
+                ->select('id', 'description', 'users_id')
+                ->where('users_id', $user_id)
+                ->get();
+    
+            foreach ($projects as $project) {
+                $project->count_tasks = $project->sections->sum('tasks_count');
+            }
+            $projects->makeHidden('sections');
+
             return $projects;
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
     public function store(Request $request)
     {
         try {
             $user_id = auth()->id();
 
-            $extraFields = $request->except(['description']);
+            $extraFields = $request->except(['description','color']);
             if (!empty($extraFields)) {
                 $invalidFields = implode(', ', array_keys($extraFields));
                 return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
@@ -36,6 +48,7 @@ class ProjectsController extends Controller
 
             $project = Project::create([
                 'description' => $request['description'],
+                'color' => $request['color'],
                 'users_id' => $user_id
             ]);
 
@@ -68,8 +81,9 @@ class ProjectsController extends Controller
         }
         try {
             $project->description = $request->input('description');
+            $project->color = $request->input('color');
 
-            $extraFields = $request->except(['description']);
+            $extraFields = $request->except(['description', 'color']);
             if (!empty($extraFields)) {
                 $invalidFields = implode(', ', array_keys($extraFields));
                 return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
