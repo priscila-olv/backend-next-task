@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\ConfirmationMail;
 use App\Models\EmailConfirmation;
 use App\Services\EmailService;
+use Google\Client;
+use Google\Service\Oauth2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -143,4 +145,39 @@ class AuthController extends Controller
             return response()->json(['error' => 'Falha ao fazer logout'], 500);
         }
     }
+    public function googleLogin(Request $request)
+{
+    $client = new Client();
+    $client->setAuthConfig(env('GOOGLE_CLIENT_SECRET'));
+    $client->setRedirectUri($request->getSchemeAndHttpHost() . '/google/callback');
+    $client->addScope('email');
+    $client->addScope('profile');
+
+    if ($request->has('code')) {
+        $client->fetchAccessTokenWithAuthCode($request->input('code'));
+        $accessToken = $client->getAccessToken();
+
+        $oauth2 = new Oauth2($client);
+        $userInfo = $oauth2->userinfo->get();
+        $email = $userInfo->email;
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name' => $userInfo->name,
+                'email' => $email,
+                'password' => bcrypt(Str::random(16)), 
+            ]);
+        }
+
+        Auth::login($user);
+
+        return redirect('/home');
+    } else {
+        $authUrl = $client->createAuthUrl();
+        return redirect($authUrl);
+    }
+}
+
 }
