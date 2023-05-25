@@ -6,6 +6,7 @@ CREATE TABLE `users` (
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `google_id` int,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)

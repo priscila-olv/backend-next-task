@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\TasksController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,11 @@ use App\Http\Controllers\AuthController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+//Login Google
+Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
 //PasswordReset
 Route::post('/auth/send-email-confirmation', [AuthController::class, 'sendEmailConfirmation']);

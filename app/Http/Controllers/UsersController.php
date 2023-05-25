@@ -13,8 +13,6 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Google\Client;
-use Google\Service\Oauth2;
 
 
 class UsersController extends Controller
@@ -156,45 +154,5 @@ class UsersController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function googleLogin(Request $request)
-{
-    $client = new Client();
-    $client->setAuthConfig(env('GOOGLE_CLIENT_SECRET'));
-    $client->setRedirectUri($request->getSchemeAndHttpHost() . '/google/callback');
-    $client->addScope('email');
-    $client->addScope('profile');
-
-    if ($request->has('code')) {
-        $client->fetchAccessTokenWithAuthCode($request->input('code'));
-        $accessToken = $client->getAccessToken();
-
-        $oauth2 = new Oauth2($client);
-        $userInfo = $oauth2->userinfo->get();
-        $email = $userInfo->email;
-
-        // Verifique se o email já existe no seu banco de dados
-        $user = User::where('email', $email)->first();
-
-        if (!$user) {
-            // O usuário não existe, você pode criar um novo usuário com os dados fornecidos pelo Google
-            $user = User::create([
-                'name' => $userInfo->name,
-                'email' => $email,
-                'password' => bcrypt(Str::random(16)), // Gere uma senha aleatória
-            ]);
-        }
-
-        // Autentique o usuário no Laravel
-        Auth::login($user);
-
-        // Redirecione para a página desejada após o login
-        return redirect('/home');
-    } else {
-        $authUrl = $client->createAuthUrl();
-        return redirect($authUrl);
-    }
-}
-
-
     
 }
