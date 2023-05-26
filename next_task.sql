@@ -6,7 +6,6 @@ CREATE TABLE `users` (
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `google_id` int,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
@@ -24,15 +23,25 @@ CREATE TABLE `tokens_users` (
     ON DELETE CASCADE
 );
 
-CREATE TABLE `projects`(
+CREATE TABLE `projects` (
   `id` int AUTO_INCREMENT NOT NULL,
   `description` varchar(255) NOT NULL,
   `color` varchar(255),
-  `users_id` int NOT NULL,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE `user_projects` (
+  `id` int AUTO_INCREMENT NOT NULL,
+  `user_id` int NOT NULL,
+  `project_id` int NOT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_user_projects`
-    FOREIGN KEY (`users_id`)
+  CONSTRAINT `fk_user_projects_users`
+    FOREIGN KEY (`user_id`)
     REFERENCES `users` (`id`)
+    ON DELETE CASCADE,
+  CONSTRAINT `fk_user_projects_projects`
+    FOREIGN KEY (`project_id`)
+    REFERENCES `projects` (`id`)
     ON DELETE CASCADE
 );
 
@@ -69,6 +78,18 @@ CREATE TABLE `tasks` (
   CONSTRAINT `fk_priority_tasks`
     FOREIGN KEY (`priorities_id`)
     REFERENCES `priorities` (`id`)
+    ON DELETE CASCADE
+);
+CREATE TABLE `project_tokens` (
+  `id` INT AUTO_INCREMENT NOT NULL,
+  `project_id` INT NOT NULL,
+  `user_email` VARCHAR(255) NOT NULL,
+  `token` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_project_tokens_projects`
+    FOREIGN KEY (`project_id`)
+    REFERENCES `projects` (`id`)
     ON DELETE CASCADE
 );
 

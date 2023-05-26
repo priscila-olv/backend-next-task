@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,5 +14,9 @@ class Project extends Model
     public function sections()
     {
         return $this->hasMany(Section::class, 'projects_id');
+    }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_projects', 'project_id', 'user_id');
     }
 }

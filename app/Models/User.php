@@ -14,7 +14,7 @@ class User extends Authenticatable implements JWTSubject
 
     protected $fillable = ['name', 'email', 'password', 'google_id'];
 
-    protected $hidden = ['password','remember_token','two_factor_recovery_codes','two_factor_secret'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_recovery_codes', 'two_factor_secret'];
     protected $casts = ['email_verified_at' => 'datetime'];
 
     public function setPasswordAttribute($value)
@@ -30,5 +30,9 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'user_projects', 'user_id', 'project_id');
     }
 }

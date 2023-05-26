@@ -10,23 +10,6 @@ use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\SectionsController;
 use App\Http\Controllers\AuthController;
 
-
-
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-// Rota para enviar o email de confirmação
-
-// Rota para atualizar o email do usuário após a confirmação
-
-
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -34,7 +17,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 //Login Google
 Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle']);
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+Route::get('/auth/callback', [GoogleAuthController::class, 'googleAuth']);
 
 //PasswordReset
 Route::post('/auth/send-email-confirmation', [AuthController::class, 'sendEmailConfirmation']);
@@ -45,7 +28,6 @@ Route::post('/auth/login', [AuthController::class, 'generateToken']);
 
 //Create user
 Route::post('/users', [UsersController::class, 'store']);
-
 
 Route::middleware(['jwt.auth'])->group(function () {
 //Usuario
@@ -69,6 +51,8 @@ Route::get('/projects', [ProjectsController::class, 'index']);
 Route::post('/projects', [ProjectsController::class, 'store']);
 Route::delete('/projects/{project}', [ProjectsController::class, 'remove']);
 Route::patch('/projects/{project}', [ProjectsController::class, 'update']);
+Route::post('/projects/invite-email', [ProjectsController::class, 'inviteUserToProject']);
+
 
 //Section
 Route::get('/sections', [SectionsController::class, 'index']);
