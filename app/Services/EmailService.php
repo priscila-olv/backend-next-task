@@ -39,6 +39,7 @@ class EmailService
     }
     public function sendInvitationEmail($emailInvited, $project, $mailData)
     {
+        var_dump("oi");
         $token = $this->generateTokenProjects($emailInvited, $project);
         $mailData['token'] = $token;
 

@@ -5,6 +5,7 @@ use App\Models\Project;
 use App\Models\Section;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TasksController extends Controller
 {
@@ -25,7 +26,7 @@ class TasksController extends Controller
     {
         try {
             $user_id = auth()->id();
-
+    
             $validatedData = $request->validate([
                 'name' => 'required',
                 'description' => 'nullable',
@@ -34,14 +35,19 @@ class TasksController extends Controller
                 'section_id' => 'required|exists:sections,id',
                 'priority_id' => 'required|exists:priorities,id'
             ]);
-
-            $section = Section::find($validatedData['section_id']);
-            $project = Project::find($section->projects_id);
-
-            if ($project->users_id != $user_id) {
+    
+            $section = Section::findOrFail($validatedData['section_id']);
+            $project = $section->project;
+    
+            $userProject = DB::table('user_projects')
+                ->where('user_id', $user_id)
+                ->where('project_id', $project->id)
+                ->first();
+    
+            if (!$userProject) {
                 return response()->json(['error' => 'Você não tem permissão para criar tarefas nesse projeto.'], 403);
             }
-
+    
             $task = Task::create([
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
@@ -50,13 +56,13 @@ class TasksController extends Controller
                 'sections_id' => $validatedData['section_id'],
                 'priorities_id' => $validatedData['priority_id']
             ]);
-
+    
             return response()->json(['task' => $task, 'message' => 'Tarefa criada com sucesso.'], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+    
     public function remove(Task $task)
     {
         try {

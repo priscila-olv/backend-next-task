@@ -59,12 +59,12 @@ class SectionsController extends Controller
     public function remove(Section $section)
     {
         try {
-            $user_id = auth()->id();
+            // $user_id = auth()->id();
             $project = Project::find($section->projects_id);
 
-            if ($project->users_id != $user_id) {
-                return response()->json(['error' => 'Você não tem permissão para remover sessões desse projeto.'], 403);
-            }
+            // if ($project->users_id != $user_id) {
+            //     return response()->json(['error' => 'Você não tem permissão para remover sessões desse projeto.'], 403);
+            // }
             $section->delete();
             return response()->json(['message' => 'Sessão removida com sucesso!'], 200);
 
