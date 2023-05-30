@@ -5,18 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Section;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SectionsController extends Controller
 {
     public function index()
     {
         try {
-            $user_id = auth()->id();
-            $sections = Section::whereHas('project', function ($query) use ($user_id) {
-                $query->where('users_id', $user_id);
-            })->get();
-
-            return response()->json(['sections' => $sections], 200);
+            return Section::all();
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -29,22 +25,16 @@ class SectionsController extends Controller
 
             $description = $request->input('description');
             $project_id = $request->input('project_id');
+            $project = Project::find($project_id);
 
-            // $validatedData = $request->validate([
-            //     'description' => 'required',
-            //     'project_id' => 'required|exists:projects,id'
-            // ]);
+            $userProject = DB::table('user_projects')
+            ->where('user_id', $user_id)
+            ->where('project_id', $project->id)
+            ->first();
 
-            //$project = Project::find($validatedData['project_id']);
-
-            // if ($project->users_id != $user_id) {
-            //     return response()->json(['error' => 'Você não tem permissão para criar sessões nesse projeto.'], 403);
-            // }
-
-            // $section = Section::create([
-            //     'description' => $validatedData['description'],
-            //     'projects_id' => $validatedData['project_id']
-            // ]);
+            if (!$userProject) {
+                return response()->json(['error' => 'Você não tem permissão para criar sessões nesse projeto.'], 403);
+            }
             $section = Section::create([
                 'description' => $description,
                 'projects_id' => $project_id
@@ -59,12 +49,18 @@ class SectionsController extends Controller
     public function remove(Section $section)
     {
         try {
-            // $user_id = auth()->id();
+            $user_id = auth()->id();
             $project = Project::find($section->projects_id);
 
-            // if ($project->users_id != $user_id) {
-            //     return response()->json(['error' => 'Você não tem permissão para remover sessões desse projeto.'], 403);
-            // }
+            $userProject = DB::table('user_projects')
+            ->where('user_id', $user_id)
+            ->where('project_id', $project->id)
+            ->first();
+
+            if (!$userProject) {
+                return response()->json(['error' => 'Você não tem permissão para remover sessões nesse projeto.'], 403);
+            }
+
             $section->delete();
             return response()->json(['message' => 'Sessão removida com sucesso!'], 200);
 
@@ -91,7 +87,12 @@ class SectionsController extends Controller
             $user_id = auth()->id();
             $project = Project::find($section->projects_id);
 
-            if ($project->users_id != $user_id) {
+            $userProject = DB::table('user_projects')
+            ->where('user_id', $user_id)
+            ->where('project_id', $project->id)
+            ->first();
+
+            if (!$userProject) {
                 return response()->json(['error' => 'Você não tem permissão para atualizar esta seção.'], 403);
             }
 
@@ -106,5 +107,4 @@ class SectionsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
 }
