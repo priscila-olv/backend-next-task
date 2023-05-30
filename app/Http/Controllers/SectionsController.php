@@ -27,20 +27,27 @@ class SectionsController extends Controller
         try {
             $user_id = auth()->id();
 
-            $validatedData = $request->validate([
-                'description' => 'required',
-                'project_id' => 'required|exists:projects,id'
-            ]);
+            $description = $request->input('description');
+            $project_id = $request->input('project_id');
 
-            $project = Project::find($validatedData['project_id']);
+            // $validatedData = $request->validate([
+            //     'description' => 'required',
+            //     'project_id' => 'required|exists:projects,id'
+            // ]);
 
-            if ($project->users_id != $user_id) {
-                return response()->json(['error' => 'Você não tem permissão para criar sessões nesse projeto.'], 403);
-            }
+            //$project = Project::find($validatedData['project_id']);
 
+            // if ($project->users_id != $user_id) {
+            //     return response()->json(['error' => 'Você não tem permissão para criar sessões nesse projeto.'], 403);
+            // }
+
+            // $section = Section::create([
+            //     'description' => $validatedData['description'],
+            //     'projects_id' => $validatedData['project_id']
+            // ]);
             $section = Section::create([
-                'description' => $validatedData['description'],
-                'projects_id' => $validatedData['project_id']
+                'description' => $description,
+                'projects_id' => $project_id
             ]);
 
             return response()->json(['section' => $section, 'message' => 'Sessão criada com sucesso.'], 201);
