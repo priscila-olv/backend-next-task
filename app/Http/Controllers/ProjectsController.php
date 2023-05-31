@@ -125,7 +125,6 @@ class ProjectsController extends Controller
                 'project_name' => $project->description,
                 'name_user' => $user->name
             ];
-            var_dump($mailData);
             $emailService->sendInvitationEmail($email, $project, $mailData);
 
             return response()->json(['message' => 'Convite enviado com sucesso'], 200);

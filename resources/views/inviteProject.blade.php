@@ -44,7 +44,7 @@
 <body>
     <div class="container">
         <h1>Olá</h1>
-        <p>Você foi convidado por {{ $name }} para participar do projeto '{{$project_name}}' no Next Task.</p>
+        <p>Você foi convidado por {{ $name_user }} para participar do projeto '{{$project_name}}' no Next Task.</p>
         <p>Para aceitar o convite, utilize o seguinte token no nosso site:</p>
         <div class="code">
             {{ $token }}

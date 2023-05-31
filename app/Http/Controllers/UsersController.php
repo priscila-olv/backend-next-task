@@ -71,7 +71,9 @@ class UsersController extends Controller
                 return response()->json(['error' => 'Você não tem permissão para atualizar este perfil'], 403);
             }
 
-            if (User::where('email', $request->input("email"))->first()) {
+            $newEmail = $request->input('email');
+
+            if ($newEmail !== $user->email && User::where('email', $newEmail)->exists()) {
                 return response()->json(['error' => 'Email informado já está cadastrado no sistema.'], 400);
             }
 
