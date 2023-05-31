@@ -24,7 +24,7 @@ class GoogleAuthController extends Controller
         $client->setRedirectUri(config('services.google.redirect'));
         $client->setScopes(['email', 'profile']);
 
-        return redirect()->away($client->createAuthUrl());
+        return response()->json(['url' => $client->createAuthUrl()], 200);
     }
     public function googleAuth(Request $request)
     {
@@ -68,6 +68,6 @@ class GoogleAuthController extends Controller
 
         $token = JWTAuth::fromUser($user);
 
-        return redirect("http://localhost:3000?token=$token");
+        return redirect("http://localhost:3000/token/$token");
     }
 }
