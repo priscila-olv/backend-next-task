@@ -27,7 +27,7 @@ class InviteProjectMail extends Mailable
         return $this->subject($this->mailData['subject'])
         ->view('inviteProject')
         ->with('name_user', $this->mailData['name_user']) 
-        ->with('token', $this->mailData['token'])
+        ->with('token_invite', $this->mailData['token_invite'])
         ->with('project_name', $this->mailData['project_name']);
     }
 }

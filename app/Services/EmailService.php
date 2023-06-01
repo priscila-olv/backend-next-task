@@ -38,27 +38,24 @@ class EmailService
    
     public function sendInvitationEmail($emailInvited, $project, $mailData)
     {
-        $token = $this->generateTokenProjects($emailInvited, $project);
-        $mailData['token'] = $token;
-
         Mail::to($emailInvited)->send(new \App\Mail\InviteProjectMail($mailData));
     }
-    public function generateTokenProjects($email, $project)
-    {
-        $emailConfirmation = EmailInviteProject::where('user_email', $email)->first();
-        $token = strtoupper(Str::random(8));
+    // public function generateTokenProjects($email, $project)
+    // {
+    //     $emailConfirmation = EmailInviteProject::where('user_email', $email)->first();
+    //     $token = strtoupper(Str::random(8));
 
-        if($emailConfirmation){
-            $emailConfirmation->token = $token;
-            $emailConfirmation->save();
-        }
-        else{
-            $emailConfirmation = new EmailInviteProject();
-            $emailConfirmation->project_id = $project->id;
-            $emailConfirmation->user_email = $email;
-            $emailConfirmation->token = $token;
-            $emailConfirmation->save();
-        }
-        return $token;
-    }
+    //     if($emailConfirmation){
+    //         $emailConfirmation->token = $token;
+    //         $emailConfirmation->save();
+    //     }
+    //     else{
+    //         $emailConfirmation = new EmailInviteProject();
+    //         $emailConfirmation->project_id = $project->id;
+    //         $emailConfirmation->user_email = $email;
+    //         $emailConfirmation->token = $token;
+    //         $emailConfirmation->save();
+    //     }
+    //     return $token;
+    // }
 }

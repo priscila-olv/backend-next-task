@@ -6,6 +6,8 @@ use App\Services\EmailService;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ProjectsController extends Controller
 {
@@ -51,10 +53,13 @@ class ProjectsController extends Controller
                 return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
             }
 
-            $project = Project::create([
-                'description' => $request['description'],
-                'color' => $request['color']
+            $validatedData = $request->validate([
+                'description' => 'required',
+                'color' => 'sometimes',
+                'token_invite' => 'sometimes'
             ]);
+
+            $project = Project::create($validatedData);
 
             $project->users()->attach($user_id);
 
@@ -63,6 +68,7 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 
     public function remove(Project $project)
     {
@@ -99,7 +105,16 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function inviteUserToProject(Request $request, EmailService $emailService)
+    public function shareProject(Request $request, Project $project)
+    {
+        $user_id = auth()->id();
+
+        if (!$project->users()->where('users.id', $user_id)->exists()) {
+            return response()->json(['error' => 'Você não tem permissão para compartilhar este projeto.'], 403);
+        }
+    }
+
+    public function inviteUserToProject(Request $request)
     {
         try {
             $user_id = auth()->id();
@@ -119,12 +134,14 @@ class ProjectsController extends Controller
             // }
 
             // $project->users()->attach($user_id);
-
             $mailData = [
                 'subject' => 'Convite para projeto NextTask',
                 'project_name' => $project->description,
-                'name_user' => $user->name
+                'name_user' => $user->name,
+                'token_invite' => $project->token_invite
             ];
+            $emailService = new EmailService();
+
             $emailService->sendInvitationEmail($email, $project, $mailData);
 
             return response()->json(['message' => 'Convite enviado com sucesso'], 200);
@@ -133,5 +150,76 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    public function storeShared(Request $request)
+    {
+        try {
+            $user_id = auth()->id();
 
+            $extraFields = $request->except(['description', 'color']);
+            if (!empty($extraFields)) {
+                $invalidFields = implode(', ', array_keys($extraFields));
+                return response()->json(['error' => 'Invalid fields: ' . $invalidFields], 400);
+            }
+
+            $project = Project::create([
+                'description' => $request['description'],
+                'color' => $request['color'],
+                'token_invite' => strtoupper(Str::random(8))
+
+            ]);
+            $project->users()->attach($user_id);
+
+            return response()->json(['project' => $project, 'message' => 'Projeto criado com sucesso.'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    public function refreshTokenProject(Project $project)
+    {
+        try {
+            $user_id = auth()->id();
+
+            if (!$project->users()->where('users.id', $user_id)->exists()) {
+                return response()->json(['error' => 'Você não tem permissão para atualizar este projeto'], 403);
+            }
+            $data = ([
+                'token_invite' => strtoupper(Str::random(8))
+            ]);
+
+            $project->update($data);
+
+            return response()->json(['token_invite' => $project->token_invite], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function participateProject(Request $request, Project $project)
+    {
+        //IMPLEMENTAR A VERIFICAÇÃO DE TOKEN!!!!!!!!!!!!!
+        try {
+            $user_id = auth()->id();
+            $project_id = $project->id;
+    
+            $existingRecord = DB::table('user_projects')
+                ->where('user_id', $user_id)
+                ->where('project_id', $project_id)
+                ->first();
+    
+            if ($existingRecord) {
+                return response()->json(['message' => 'Você já participa deste projeto'], 400);
+            }
+    
+            DB::table('user_projects')->insert([
+                'user_id' => $user_id,
+                'project_id' => $project_id,
+            ]);
+    
+
+            return response()->json(['project' => $project, 'message' => 'Você foi adicionado ao projeto'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

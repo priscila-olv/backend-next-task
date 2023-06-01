@@ -47,8 +47,10 @@
         <p>Você foi convidado por {{ $name_user }} para participar do projeto '{{$project_name}}' no Next Task.</p>
         <p>Para aceitar o convite, utilize o seguinte token no nosso site:</p>
         <div class="code">
-            {{ $token }}
+            {{ $token_invite }}
         </div>
+        <!-- <p>Para aceitar o convite, clique no botão abaixo:</p>
+        <a href="http://localhost:3000" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Clique aqui</a> -->
     </div>
 </body>
 </html>
