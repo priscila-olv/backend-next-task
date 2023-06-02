@@ -1,4 +1,4 @@
-CREATE DATABASE next_task;
+create DATABASE next_task;
 USE next_task;
 
 CREATE TABLE `users` (
@@ -27,6 +27,7 @@ CREATE TABLE `projects` (
   `id` int AUTO_INCREMENT NOT NULL,
   `description` varchar(255) NOT NULL,
   `color` varchar(255),
+  `token_invite` varchar(255),
   PRIMARY KEY (`id`)
 );
 
@@ -80,12 +81,10 @@ CREATE TABLE `tasks` (
     REFERENCES `priorities` (`id`)
     ON DELETE CASCADE
 );
-CREATE TABLE `project_tokens` (
+CREATE TABLE `invite_projects` (
   `id` INT AUTO_INCREMENT NOT NULL,
   `project_id` INT NOT NULL,
   `user_email` VARCHAR(255) NOT NULL,
-  `token` VARCHAR(255) NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_project_tokens_projects`
     FOREIGN KEY (`project_id`)

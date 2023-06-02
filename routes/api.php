@@ -54,7 +54,7 @@ Route::patch('/projects/{project}', [ProjectsController::class, 'update']);
 Route::post('/projects/invite-email', [ProjectsController::class, 'inviteUserToProject']);
 Route::post('projects/shared',[ProjectsController::class, 'storeShared']);
 Route::post('projects/shared/{project}/refresh-token',[ProjectsController::class, 'refreshTokenProject']);
-Route::post('projects/participate/{project}', [ProjectsController::class, 'participateProject']);
+Route::post('projects/participate', [ProjectsController::class, 'participateProject']);
 
 //Section
 Route::get('/sections', [SectionsController::class, 'index']);
