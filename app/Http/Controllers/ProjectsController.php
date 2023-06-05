@@ -111,57 +111,83 @@ class ProjectsController extends Controller
         try {
             $user_id = auth()->id();
             $user = User::where('id', $user_id)->first();
-
+    
             $projectId = $request->input('project_id');
-            $email = $request->input('email_invite');
-
+            $emails = $request->input('emails_invite');
+    
             $project = Project::find($projectId);
             if (!$project) {
                 return response()->json(['error' => 'Projeto não encontrado'], 404);
             }
-
+    
             $token = $project->token_invite; 
-
+    
             if ($token === null) {
                 $token = strtoupper(Str::random(8));
-
+    
                 while (Project::where('token_invite', $token)->exists()) {
                     $token = strtoupper(Str::random(8));
                 }
-
+    
                 if ($token !== $project->token_invite) {
                     $project->token_invite = $token;
                     $project->save();
                 }
             }
-
-            $mailData = [
-                'subject' => 'Convite para projeto NextTask',
-                'project_name' => $project->description,
-                'name_user' => $user->name,
-                'token_invite' => $project->token_invite
-            ];
+    
             $emailService = new EmailService();
-
-            $existingInvite = InviteUserProject::where('project_id', $projectId)
-            ->where('user_email', $email)
-            ->first();
-
-        if (!$existingInvite) {
-            $inviteUserProject = new InviteUserProject();
-            $inviteUserProject->project_id = $projectId;
-            $inviteUserProject->user_email = $email;
-            $inviteUserProject->save();
-        }
-
-            $emailService->sendInvitationEmail($email, $project, $mailData);
-
+    
+            foreach ($emails as $email) {
+                $isUserInProject = DB::table('user_projects')
+                    ->where('user_id', $user_id)
+                    ->where('project_id', $projectId)
+                    ->exists();
+    
+                $existingInvite = InviteUserProject::where('project_id', $projectId)
+                    ->where('user_email', $email)
+                    ->exists();
+    
+                if (!$isUserInProject || !$existingInvite) {
+                    $mailData = [
+                        'subject' => 'Convite para projeto NextTask',
+                        'project_name' => $project->description,
+                        'name_user' => $user->name,
+                        'token_invite' => $project->token_invite
+                    ];
+    
+                    $inviteUserProject = new InviteUserProject();
+                    $inviteUserProject->project_id = $projectId;
+                    $inviteUserProject->user_email = $email;
+                    $inviteUserProject->save();
+    
+                    $emailService->sendInvitationEmail($email, $project, $mailData);
+                }
+            }
+    
+            InviteUserProject::where('project_id', $projectId)
+                ->whereNotIn('user_email', $emails)
+                ->delete();
+    
+            $usersToRemove = User::whereNotIn('email', $emails)
+                ->whereHas('projects', function ($query) use ($projectId) {
+                    $query->where('project_id', $projectId);
+                })
+                ->get();
+    
+            foreach ($usersToRemove as $userToRemove) {
+                $userToRemove->projects()->detach($projectId);
+            }
+    
             return response()->json(['token_invite' => $token, 'message' => 'Convite enviado com sucesso'], 200);
-
+    
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
+    
+
+    
 
     public function storeShared(Request $request)
     {
