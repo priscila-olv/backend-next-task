@@ -43,10 +43,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Olá, {{ $name }}</h1>
+        <h1 style="color: #d4923c;">Olá, {{ $name }}</h1>
         <p>Recebemos uma solicitação para redefinir sua senha do Next Task.</p>
         <p>Insira o código de redefinição de senha a seguir:</p>
-        <div class="code">
+        <div class="code" style="background-color: #e3ac64; color: #fff;">
             {{ $token }}
         </div>
     </div>
