@@ -26,7 +26,7 @@ class ProjectsController extends Controller
                     $query->withCount('tasks');
                 }
             ])
-                ->select('id', 'description', 'color')
+                ->select('id', 'description', 'color', 'token_invite')
                 ->whereHas('users', function ($query) use ($user_id) {
                     $query->where('users.id', $user_id);
                 })
@@ -35,6 +35,7 @@ class ProjectsController extends Controller
             foreach ($projects as $project) {
                 $project->count_tasks = $project->sections->sum('tasks_count');
             }
+
             $projects->makeHidden('sections');
 
             return $projects;
