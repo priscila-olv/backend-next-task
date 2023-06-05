@@ -16,17 +16,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UsersController extends Controller
 {
-    public function index()
-    {
-        $this->middleware('jwt.auth');
-
-        try {
-            return User::all();
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
     public function store(Request $request)
     {
         try {
@@ -70,7 +59,7 @@ class UsersController extends Controller
             if (auth()->user()->id !== $user->id) {
                 return response()->json(['error' => 'Você não tem permissão para atualizar este perfil'], 403);
             }
-
+            
             $newEmail = $request->input('email');
 
             if ($newEmail !== $user->email && User::where('email', $newEmail)->exists()) {
@@ -112,12 +101,12 @@ class UsersController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    public function find($id)
+    public function index()
     {
         $this->middleware('jwt.auth');
 
         try {
-            $user = User::findOrFail($id);
+            $user = User::findOrFail(auth()->user()->id);
             return response()->json(['user' => $user]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['error' => 'User not found'], 404);
