@@ -38,28 +38,29 @@ class ProjectsController extends Controller
                     $query->where('users.id', $user_id);
                 })
                 ->get();
-
+    
             foreach ($projects as $project) {
                 $project->count_tasks = $project->sections->sum('tasks_count');
-
+    
                 $userParticipating = $project->users->pluck('email')->toArray();
                 if (count($userParticipating) > 1) {
                     $project->user_participating = $userParticipating;
+                } else {
+                    $project->user_participating = [];
                 }
-
+    
                 $userInvitePending = $project->inviteUserProjects->pluck('user_email')->toArray();
-                if (!empty($userInvitePending)) {
-                    $project->user_invite_pending = $userInvitePending;
-                }
+                $project->user_invite_pending = $userInvitePending;
             }
-
+    
             $projects->makeHidden(['sections', 'users', 'inviteUserProjects']);
-
+    
             return $projects;
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
 
 
     public function store(Request $request)
