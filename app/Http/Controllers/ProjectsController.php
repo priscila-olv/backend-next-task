@@ -229,75 +229,52 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-    public function refreshTokenProject(Project $project)
-    {
-        try {
-            $user_id = auth()->id();
-
-            if (!$project->users()->where('users.id', $user_id)->exists()) {
-                return response()->json(['error' => 'Você não tem permissão para atualizar este projeto'], 403);
-            }
-
-            $token = strtoupper(Str::random(8));
-            while (Project::where('token_invite', $token)->exists()) {
-                $token = strtoupper(Str::random(8));
-            }
-
-            $data = ([
-                'token_invite' => $token
-            ]);
-
-            $project->update($data);
-
-            return response()->json(['token_invite' => $project->token_invite], 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
     public function participateProject(Request $request)
-    {
-        try {
-            $user_id = auth()->id();
-            $tokenInvite = $request->input('token_invite');
-            $project = Project::where('token_invite', $tokenInvite)->first();
-
-            if (!$project) {
-                return response()->json(['error' => 'Projeto com código informado não existe'], 404);
-            }
-
-            $existingRecord = DB::table('user_projects')
-                ->where('user_id', $user_id)
-                ->where('project_id', $project->id)
-                ->first();
-
-            if ($existingRecord) {
-                return response()->json(['message' => 'Você já participa deste projeto'], 400);
-            }
-
-            $invitation = DB::table('invite_projects')
-                ->where('project_id', $project->id)
-                ->where('user_email', auth()->user()->email)
-                ->first();
-
-            if (!$invitation) {
-                return response()->json(['error' => 'Você não foi convidado para participar desse projeto'], 403);
-            }
-
-            DB::table('user_projects')->insert([
-                'user_id' => $user_id,
-                'project_id' => $project->id,
-            ]);
-
-            DB::table('invite_projects')
-                ->where('project_id', $project->id)
-                ->where('user_email', auth()->user()->email)
-                ->delete();
-
-            return response()->json(['project' => $project, 'message' => 'Você foi adicionado ao projeto'], 201);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+{
+    try {
+        $user_id = auth()->id();
+        $tokenInvite = $request->input('token_invite');
+        $project = Project::join('invite_projects', 'projects.id', '=', 'invite_projects.project_id')
+        ->where('invite_projects.token_invite', $tokenInvite)
+        ->select('projects.*')
+        ->first();
+    
+        if (!$project) {
+            return response()->json(['error' => 'Projeto com código informado não existe'], 404);
         }
+
+        $existingRecord = DB::table('user_projects')
+            ->where('user_id', $user_id)
+            ->where('project_id', $project->id)
+            ->first();
+
+        if ($existingRecord) {
+            return response()->json(['message' => 'Você já participa deste projeto'], 400);
+        }
+
+        $invitation = DB::table('invite_projects')
+            ->where('project_id', $project->id)
+            ->where('user_email', auth()->user()->email)
+            ->first();
+
+        if (!$invitation) {
+            return response()->json(['error' => 'Você não foi convidado para participar desse projeto'], 403);
+        }
+
+        DB::table('user_projects')->insert([
+            'user_id' => $user_id,
+            'project_id' => $project->id,
+        ]);
+
+        DB::table('invite_projects')
+            ->where('project_id', $project->id)
+            ->where('user_email', auth()->user()->email)
+            ->delete();
+
+        return response()->json(['project' => $project, 'message' => 'Você foi adicionado ao projeto'], 201);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
+
 }
