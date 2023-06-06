@@ -22,11 +22,18 @@ class ProjectsController extends Controller
         try {
             $user_id = auth()->id();
             $projects = Project::with([
+                'users' => function ($query) {
+                    $query->select('users.id', 'users.email');
+                },
+                'inviteUserProjects' => function ($query) {
+                    $query->select('invite_projects.id', 'invite_projects.user_email', 'invite_projects.project_id')
+                        ->with('project:id,description,color');
+                },
                 'sections' => function ($query) {
                     $query->withCount('tasks');
                 }
             ])
-                ->select('id', 'description', 'color', 'token_invite')
+                ->select('id', 'description', 'color')
                 ->whereHas('users', function ($query) use ($user_id) {
                     $query->where('users.id', $user_id);
                 })
@@ -34,9 +41,15 @@ class ProjectsController extends Controller
 
             foreach ($projects as $project) {
                 $project->count_tasks = $project->sections->sum('tasks_count');
+
+                $userParticipating = $project->users->pluck('email')->toArray();
+                $project->user_participating = $userParticipating;
+
+                $userInvitePending = $project->inviteUserProjects->pluck('user_email')->toArray();
+                $project->user_invite_pending = $userInvitePending;
             }
 
-            $projects->makeHidden('sections');
+            $projects->makeHidden(['sections', 'users', 'inviteUserProjects']);
 
             return $projects;
         } catch (\Exception $e) {
@@ -110,84 +123,82 @@ class ProjectsController extends Controller
     {
         try {
             $user_id = auth()->id();
-            $user = User::where('id', $user_id)->first();
-    
+
             $projectId = $request->input('project_id');
             $emails = $request->input('emails_invite');
-    
+
             $project = Project::find($projectId);
             if (!$project) {
                 return response()->json(['error' => 'Projeto não encontrado'], 404);
             }
-    
-            $token = $project->token_invite; 
-    
-            if ($token === null) {
-                $token = strtoupper(Str::random(8));
-    
-                while (Project::where('token_invite', $token)->exists()) {
-                    $token = strtoupper(Str::random(8));
-                }
-    
-                if ($token !== $project->token_invite) {
-                    $project->token_invite = $token;
-                    $project->save();
-                }
-            }
-    
+
+            $token = strtoupper(Str::random(8));
+
             $emailService = new EmailService();
-    
+
+            $isUserInProject = DB::table('user_projects')
+                ->where('user_id', $user_id)
+                ->where('project_id', $projectId)
+                ->exists();
+
+            InviteUserProject::where('project_id', $projectId)
+                ->whereNotIn('user_email', $emails)
+                ->where('user_email', '!=', auth()->user()->email)
+                ->delete();
+
+                $userEmail = auth()->user()->email;
+
+                DB::table('user_projects')
+                ->where('project_id', $projectId)
+                ->whereIn('user_id', function ($query) use ($emails) {
+                    $query->select('id')
+                        ->from('users')
+                        ->whereIn('email', $emails);
+                })
+                ->where('user_id', '!=', $user_id)
+                ->delete();
+                
             foreach ($emails as $email) {
-                $isUserInProject = DB::table('user_projects')
-                    ->where('user_id', $user_id)
-                    ->where('project_id', $projectId)
-                    ->exists();
-    
+
+                $user = User::where('email', $email)->first();
+
+                if ($user != null) {
+                    $isUserInProject = DB::table('user_projects')
+                        ->where('user_id', $user->id)
+                        ->where('project_id', $projectId)
+                        ->exists();
+                } else {
+                    $isUserInProject = false;
+                }
                 $existingInvite = InviteUserProject::where('project_id', $projectId)
                     ->where('user_email', $email)
                     ->exists();
-    
-                if (!$isUserInProject || !$existingInvite) {
+
+                if (!$isUserInProject && !$existingInvite) {
+
                     $mailData = [
                         'subject' => 'Convite para projeto NextTask',
                         'project_name' => $project->description,
-                        'name_user' => $user->name,
-                        'token_invite' => $project->token_invite
+                        'name_user' => auth()->user()->name,
+                        'token_invite' => $token
                     ];
-    
+
                     $inviteUserProject = new InviteUserProject();
                     $inviteUserProject->project_id = $projectId;
                     $inviteUserProject->user_email = $email;
+                    $inviteUserProject->token_invite = $token;
                     $inviteUserProject->save();
-    
-                    $emailService->sendInvitationEmail($email, $project, $mailData);
+
+                   // $emailService->sendInvitationEmail($email, $project, $mailData);
                 }
             }
-    
-            InviteUserProject::where('project_id', $projectId)
-                ->whereNotIn('user_email', $emails)
-                ->delete();
-    
-            $usersToRemove = User::whereNotIn('email', $emails)
-                ->whereHas('projects', function ($query) use ($projectId) {
-                    $query->where('project_id', $projectId);
-                })
-                ->get();
-    
-            foreach ($usersToRemove as $userToRemove) {
-                $userToRemove->projects()->detach($projectId);
-            }
-    
-            return response()->json(['token_invite' => $token, 'message' => 'Convite enviado com sucesso'], 200);
-    
+
+            return response()->json(['message' => 'Convite enviado com sucesso'], 200);
+
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    
-    
-
-    
 
     public function storeShared(Request $request)
     {
@@ -251,39 +262,39 @@ class ProjectsController extends Controller
             $user_id = auth()->id();
             $tokenInvite = $request->input('token_invite');
             $project = Project::where('token_invite', $tokenInvite)->first();
-    
+
             if (!$project) {
                 return response()->json(['error' => 'Projeto com código informado não existe'], 404);
             }
-    
+
             $existingRecord = DB::table('user_projects')
                 ->where('user_id', $user_id)
                 ->where('project_id', $project->id)
                 ->first();
-    
+
             if ($existingRecord) {
                 return response()->json(['message' => 'Você já participa deste projeto'], 400);
             }
-    
+
             $invitation = DB::table('invite_projects')
                 ->where('project_id', $project->id)
                 ->where('user_email', auth()->user()->email)
                 ->first();
-    
+
             if (!$invitation) {
                 return response()->json(['error' => 'Você não foi convidado para participar desse projeto'], 403);
             }
-    
+
             DB::table('user_projects')->insert([
                 'user_id' => $user_id,
                 'project_id' => $project->id,
             ]);
 
             DB::table('invite_projects')
-            ->where('project_id', $project->id)
-            ->where('user_email', auth()->user()->email)
-            ->delete();
-    
+                ->where('project_id', $project->id)
+                ->where('user_email', auth()->user()->email)
+                ->delete();
+
             return response()->json(['project' => $project, 'message' => 'Você foi adicionado ao projeto'], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

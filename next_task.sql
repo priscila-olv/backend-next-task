@@ -27,7 +27,6 @@ CREATE TABLE `projects` (
   `id` int AUTO_INCREMENT NOT NULL,
   `description` varchar(255) NOT NULL,
   `color` varchar(255),
-  `token_invite` varchar(255),
   PRIMARY KEY (`id`)
 );
 
@@ -85,6 +84,7 @@ CREATE TABLE `invite_projects` (
   `id` INT AUTO_INCREMENT NOT NULL,
   `project_id` INT NOT NULL,
   `user_email` VARCHAR(255) NOT NULL,
+  `token_invite` varchar(255),
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_project_tokens_projects`
     FOREIGN KEY (`project_id`)
