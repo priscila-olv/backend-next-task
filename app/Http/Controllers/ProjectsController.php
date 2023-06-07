@@ -60,8 +60,6 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    
-
 
     public function store(Request $request)
     {
@@ -77,7 +75,6 @@ class ProjectsController extends Controller
             $validatedData = $request->validate([
                 'description' => 'required',
                 'color' => 'sometimes',
-                'token_invite' => 'sometimes'
             ]);
 
             $project = Project::create($validatedData);
@@ -193,7 +190,7 @@ class ProjectsController extends Controller
                     $inviteUserProject->token_invite = $token;
                     $inviteUserProject->save();
 
-                    // $emailService->sendInvitationEmail($email, $project, $mailData);
+                    $emailService->sendInvitationEmail($email, $project, $mailData);
                 }
             }
 
