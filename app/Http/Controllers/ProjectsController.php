@@ -44,6 +44,7 @@ class ProjectsController extends Controller
     
                 $userParticipating = $project->users->pluck('email')->toArray();
                 if (count($userParticipating) > 1) {
+                    $userParticipating = array_diff($userParticipating, [auth()->user()->email]);
                     $project->user_participating = $userParticipating;
                 } else {
                     $project->user_participating = [];
@@ -60,6 +61,7 @@ class ProjectsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
 
     public function store(Request $request)
     {
