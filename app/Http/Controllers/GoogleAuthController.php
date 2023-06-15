@@ -7,6 +7,7 @@ use App\Models\User;
 use Google_Client;
 use Google_Service_Oauth2;
 use Illuminate\Http\Request;
+use GuzzleHttp\Client;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -44,8 +45,9 @@ class GoogleAuthController extends Controller
         $client->setRedirectUri(config('services.google.redirect'));
         $client->setScopes(['email', 'profile']);
 
-        $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+        $client->setHttpClient(new Client(['verify' => false]));
 
+        $accessToken = $client->fetchAccessTokenWithAuthCode($code);
         if (!$accessToken) {
             return response()->json(['error' => 'Failed to fetch access token'], 400);
         }
@@ -68,6 +70,6 @@ class GoogleAuthController extends Controller
 
         $token = JWTAuth::fromUser($user);
 
-        return redirect("http://localhost:3000/token/$token");
+        return redirect("http://localhost:80/token/$token");
     }
 }
