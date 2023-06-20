@@ -70,6 +70,6 @@ class GoogleAuthController extends Controller
 
         $token = JWTAuth::fromUser($user);
 
-        return redirect("http://localhost:80/token/$token");
+        return redirect("http://localhost:3000/token/$token");
     }
 }
